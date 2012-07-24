@@ -131,6 +131,26 @@ class Gateways(object):
         self.hosts_file = '/etc/hosts.mesh'
         self.dnsmasq_include_file = '/etc/dnsmasq.conf.include'
 
+    def set_ethernet_buttons(self, ethernet_buttons):
+        query = "SELECT interface FROM wired WHERE gateway='no';"
+        _, cursor = _utils.execute_query(self.netconfdb, query)
+        results = cursor.fetchall()
+        if results:
+            for interface in results:
+                ethernet_buttons = ethernet_buttons + "<td><input type='submit' name='interface' value='" + interface[0] + "' /></td>\n"
+        return ethernet_buttons
+
+    def set_wireless_buttons(self, wireless_buttons):
+        # Generate a list of wireless interfaces on the node that are not
+        # enabled but are known.  As before, each button gets is own button
+        # in a table.
+        cursor.execute("SELECT mesh_interface FROM wireless WHERE gateway='no';")
+        results = cursor.fetchall()
+        if results:
+            for interface in results:
+                wireless_buttons = wireless_buttons + "<td><input type='submit' name='interface' value='" + interface[0] + "' /></td>\n"
+        return wireless_buttons
+
     # Pretends to be index.html.
     def index(self):
         ethernet_buttons = ""
@@ -140,24 +160,8 @@ class Gateways(object):
         # the node.
         self.update_network_interfaces()
 
-        query = "SELECT interface FROM wired WHERE gateway='no';"
-        _, cursor = _utils.execute_query(self.netconfdb, query)
-        results = cursor.fetchall()
-        if results:
-            for interface in results:
-                ethernet_buttons = ethernet_buttons + "<td><input type='submit' name='interface' value='" + interface[0] + "' /></td>\n"
-
-        # Generate a list of wireless interfaces on the node that are not
-        # enabled but are known.  As before, each button gets is own button
-        # in a table.
-        cursor.execute("SELECT mesh_interface FROM wireless WHERE gateway='no';")
-        results = cursor.fetchall()
-        if results:
-            for interface in results:
-                wireless_buttons = wireless_buttons + "<td><input type='submit' name='interface' value='" + interface[0] + "' /></td>\n"
-
-        # Close the connection to the database.
-        cursor.close()
+        ethernet_buttons = self.set_ethernet_buttons(ethernet_buttons)
+        wireless_buttons = self.set_wireless_buttons(wireless_buttons)
 
         # Render the HTML page.
         try:
