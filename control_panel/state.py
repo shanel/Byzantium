@@ -6,6 +6,7 @@
 
 
 import abc
+import sqlite3
 
 class State(object):
     __metaclass__ = abc.ABCMeta
@@ -15,7 +16,7 @@ class State(object):
         return
 
     @abc.abstractmethod
-    def create(self, item):
+    def create(self, kind, item):
         return
 
     @abc.abstractmethod
@@ -23,31 +24,49 @@ class State(object):
         pass
 
     @abc.abstractmethod
-    def replace(self, old_item, new_item):
+    def replace(self, kind, old_item, new_item):
         pass
 
 class DBBackedState(State):
 
-    def _create_query_fragment_from_prototype(self, prototype):
+    def __init__(self, db_path):
+        self.db_path = db_path
+        self.connection = sqlite3.connect(self.db_path)
+
+    def _create_initialization_fragment_from_prototype(self, prototype):
+        """Take an instance of a class and make a table based on its attributes."""
         query = []
-        for k, v in prototype.__dict__.iteritems():
-            query.append(k)
-            if type(v) == int:
+        columns = prototype.__dict__.keys()
+        columns.sort()
+        for column in columns:
+            query.append(column)
+            if type(columns(column)) == int:
                 query.append('NUMERIC,')
             else:
                 query.append('TEXT,')
-        return ' '.join(query)
+        return ' '.join(query)[0:-1] # snip off the final comma
+
+    def _create_query_fragment_from_item(self, item):
+        query = []
+        attrs = item.__dict__.keys()
+        attrs.sort()
+        for attr in attrs:
+            query.append(attrs(attr))
+        return ','.join(query)
 
     def initialize(self, name, prototype):
-        pass
+        fragment = self._create_initialization_fragment_from_prototype(prototype)
+        cursor = self.connection.cursor()
+        cursor.execute('CREATE TABLE %s (%s)' % (name, fragment))
+        self.connection.commit()
 
-    def create(self, network):
+    def create(self, kind, network):
         pass
 
     def list(self, kind):
         pass
 
-    def replace(self, old_network, new_network):
+    def replace(self, kind, old_network, new_network):
         pass
 
 class NetworkState(DBBackedState):
@@ -59,7 +78,7 @@ class NetworkState(DBBackedState):
         self.initialize_mesh_networks()
 
     def initialize_wired_networks(self):
-        self.initialize('wired', WiredNetwork('', ''. ''))
+        self.initialize('wired', WiredNetwork('', '', ''))
 
     def initialize_wireless_networks(self):
         self.initialize(WirelessNetwork('wireless', '', '', '', '', 0, ''))
@@ -67,13 +86,13 @@ class NetworkState(DBBackedState):
     def initialize_mesh_networks(self):
         self.initialize('meshes', Mesh('', '', ''))
 
-    def create(self, network):
+    def create(self, kind, network):
         pass
 
     def list(self, kind):
         pass
 
-    def replace(self, old_network, new_network):
+    def replace(self, kind, old_network, new_network):
         pass
 
 class ServiceState(DBBackedState):
@@ -89,13 +108,13 @@ class ServiceState(DBBackedState):
     def initialize_webaps(self):
         self.initialize('webapps', WebApp('', ''))
 
-    def create(self, service):
+    def create(self, kind, service):
         pass
 
     def list(self, kind):
         pass
 
-    def replace(self, old_service, new_service):
+    def replace(self, kind, old_service, new_service):
         pass
 
 class WiredNetwork(object):
@@ -124,7 +143,7 @@ class Mesh(object):
 
 class Daemon(object):
 
-    def __init__(self, name, showtouser, port, initiscript, status):
+    def __init__(self, name, showtouser, port, initscript, status):
         self.name = name
         self.status = status
         self.showtouser = showtouser
