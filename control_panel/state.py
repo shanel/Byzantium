@@ -54,7 +54,7 @@ class DBBackedState(State):
         attrs.sort()
         for attr in attrs:
             query.append('?')
-            values.append(item__dict__[attr])
+            values.append(item.__dict__[attr])
         return ','.join(query), values
 
     def _create_update_query_fragment_from_item(self, item):
@@ -92,7 +92,7 @@ class DBBackedState(State):
         to_execute = 'SELECT * FROM ?'
         cursor = self.connection.cursor()
         cursor.execute(to_execute, kind)
-        col_name_list = [desc[0] for desc in cur.description]
+        col_name_list = [desc[0] for desc in cursor.description]
         results = cursor.fetchall()
         objects = []
         for result in results:
@@ -108,7 +108,7 @@ class DBBackedState(State):
         setting_frag, setting_values = self._create_update_setting_fragment_from_item(new)
         to_execute = 'UPDATE %s SET %s WHERE %s;' % (kind, setting_frag, query_frag)
         cursor = self.connection.cursor()
-        cursor.execute(to_execute, setting_frag + query_frag)
+        cursor.execute(to_execute, setting_values + query_values)
         self.connection.commit()
 
 
