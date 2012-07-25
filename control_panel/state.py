@@ -11,6 +11,10 @@ class State(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
+    def initialize(self, name, prototype):
+        return
+
+    @abc.abstractmethod
     def create(self, item):
         return
 
@@ -23,6 +27,19 @@ class State(object):
         pass
 
 class DBBackedState(State):
+
+    def _create_query_fragment_from_prototype(self, prototype):
+        query = []
+        for k, v in prototype.__dict__.iteritems():
+            query.append(k)
+            if type(v) == int:
+                query.append('NUMERIC,')
+            else:
+                query.append('TEXT,')
+        return ' '.join(query)
+
+    def initialize(self, name, prototype):
+        pass
 
     def create(self, network):
         pass
@@ -42,13 +59,13 @@ class NetworkState(DBBackedState):
         self.initialize_mesh_networks()
 
     def initialize_wired_networks(self):
-        pass
+        self.initialize('wired', WiredNetwork('', ''. ''))
 
     def initialize_wireless_networks(self):
-        pass
+        self.initialize(WirelessNetwork('wireless', '', '', '', '', 0, ''))
 
     def initialize_mesh_networks(self):
-        pass
+        self.initialize('meshes', Mesh('', '', ''))
 
     def create(self, network):
         pass
@@ -67,10 +84,10 @@ class ServiceState(DBBackedState):
         self.initialize_webaps()
 
     def initialize_daemons(self):
-        pass
+        self.initialize('daemons', Daemon('', '', 0, '', ''))
 
     def initialize_webaps(self):
-        pass
+        self.initialize('webapps', WebApp('', ''))
 
     def create(self, service):
         pass
