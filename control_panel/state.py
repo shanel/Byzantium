@@ -178,7 +178,7 @@ class DBBackedState(State):
         objects = []
         for result in results:
             attrs = {}
-            for i, v in result.enumerate():
+            for i, v in list(result).enumerate():
                 attrs[col_name_list[i]] = v
             obj = self.kind_to_class[kind](**attrs)
             objects.append(obj)
