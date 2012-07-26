@@ -196,8 +196,8 @@ class DBBackedState(State):
 
 class NetworkState(DBBackedState):
 
-    def __init__(self):
-        super(NetworkState, self).__init__()
+    def __init__(self, db_path):
+        super(NetworkState, self).__init__(db_path)
         self.initialize_wired_networks()
         self.initialize_wireless_networks()
 
@@ -210,8 +210,8 @@ class NetworkState(DBBackedState):
 
 class ServiceState(DBBackedState):
 
-    def __init__(self):
-        super(ServiceState, self).__init__()
+    def __init__(self, db_path):
+        super(ServiceState, self).__init__(db_path)
         self.initialize_daemons()
         self.initialize_webaps()
         self.initialize_mesh_networks()
