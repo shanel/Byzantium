@@ -92,7 +92,7 @@ class DBBackedState(State):
             if type(prototype.__dict__[column]) == int:
                 query.append('? NUMERIC,')
             else:
-                query.append('TEXT,')
+                query.append('? TEXT,')
         return ' '.join(query)[0:-1], columns
 
     def _create_query_fragment_from_item(self, item):
