@@ -154,7 +154,7 @@ class DBBackedState(State):
         frag, columns = self._create_initialization_fragment_from_prototype(prototype)
         to_execute = 'CREATE TABLE %s (%s);' % (name, frag % columns)
         cursor = self.connection.cursor()
-        cursor.execute(to_execute, columns)
+        cursor.execute(to_execute)
         self.connection.commit()
         self.kind_to_class[name] = prototype.__class__
 
