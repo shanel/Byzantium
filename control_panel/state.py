@@ -68,7 +68,7 @@ class DBBackedState(State):
     """
 
     def __init__(self, db_path):
-        super().__init__()
+        super(DBBackedState, self).__init__()
         self.db_path = db_path
         self.connection = sqlite3.connect(self.db_path)
         # Not quite sure if kind_to_class should be here or in State
@@ -198,7 +198,7 @@ class DBBackedState(State):
 class NetworkState(DBBackedState):
 
     def __init__(self, db_path):
-        super().__init__(db_path)
+        super(NetworkState, self).__init__(db_path)
         self.initialize_wired_networks()
         self.initialize_wireless_networks()
 
@@ -209,10 +209,10 @@ class NetworkState(DBBackedState):
         self.initialize('wireless', WirelessNetwork('', '', '', '', 0, ''))
 
 
-class ServiceState(DBBackedState):
+class NetworkState(DBBackedState):
 
     def __init__(self, db_path):
-        super().__init__(db_path)
+        super(NetworkState, self).__init__(db_path)
         self.initialize_daemons()
         self.initialize_webaps()
         self.initialize_mesh_networks()
