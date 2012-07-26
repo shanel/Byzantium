@@ -82,7 +82,7 @@ class DBBackedState(State):
               name columns with
         
         Returns:
-          A string with '? NUMERIC/TEXT' entries to be used and the tuple of
+          A string with '%s NUMERIC/TEXT' entries to be used and the tuple of
               column names
         """
         query = []
@@ -90,9 +90,9 @@ class DBBackedState(State):
         columns.sort()
         for column in columns:
             if type(prototype.__dict__[column]) == int:
-                query.append('? NUMERIC,')
+                query.append('%s NUMERIC,')
             else:
-                query.append('? TEXT,')
+                query.append('%s TEXT,')
         return ' '.join(query)[0:-1], tuple(columns)
 
     def _create_query_fragment_from_item(self, item):
@@ -160,9 +160,9 @@ class DBBackedState(State):
 
     def create(self, kind, item):
         frag, values = self._create_query_fragment_from_item(item)
-        to_execute = 'INSERT INTO %s VALUES (%s);' % (kind, frag)
+        to_execute = 'INSERT INTO %s VALUES (%s);' % (kind, frag % values)
         cursor = self.connection.cursor()
-        cursor.execute(to_execute, values)
+        cursor.execute(to_execute)
         self.connection.commit()
 
     def list(self, kind):
