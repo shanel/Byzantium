@@ -1,42 +1,89 @@
-# 
-# Maybe just make/get objects - return them all and people can sort/choose based on their attrs
-# 
-# struct-ish?
-# 
-# NOTE: we may need to change the column order declared in the current SQL files.
+# state.py - Abstraction layer for storing different types of state in any kind
+#     of backend store
+
+# Project Byzantium: http://wiki.hacdc.org/index.php/Byzantium
+# License: GPLv3
 
 
 import abc
 import sqlite3
 
 class State(object):
+    """Metaclass State object."""
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def initialize(self, name, prototype):
+        """Set up any initial state necessary.
+        
+        Args:
+          name: str, the name of the state you are storing
+          prototype: instance, a simple instance of the class who's attributes
+              make up the state
+        """
         return
 
     @abc.abstractmethod
     def create(self, kind, item):
+        """Create a new state entry.
+        
+        Args:
+          kind: str, the kind of state you are creating
+          item: instance, the instance who's attributes you are adding
+        """
         return
 
     @abc.abstractmethod
     def list(self, kind):
+        """Get a list of state objects.
+        
+        Args:
+          kind: str, the kind of state you are trying to get a listing of
+        
+        Returns:
+          A list of appropriate objects
+        """
         pass
 
     @abc.abstractmethod
-    def replace(self, kind, old_item, new_item):
+    def replace(self, kind, old, new):
+        """Replace an old state entry with a new one.
+        
+        Args:
+          kind: str, the kind of state you are trying to update
+          old: instance, the instance who's attributes you will be replacing
+          new: instance, the instance who's attributes will replace the old attributes
+        """
         pass
 
 class DBBackedState(State):
+    """A State object who's backend store is an SQLite3 DB.
+    
+    Attributes:
+      db_path: str, the path to the SQLite3 DB file
+      connection: sqlite3.connection, a connection object for working with the
+          db
+      kind_to_class: dict, a mapping of string 'kinds' to the proper classes to
+          return them with
+    """
 
     def __init__(self, db_path):
         self.db_path = db_path
         self.connection = sqlite3.connect(self.db_path)
+        # Not quite sure if kind_to_class should be here or in State
         self.kind_to_class = {}
 
     def _create_initialization_fragment_from_prototype(self, prototype):
-        """Take an instance of a class and make a table based on its attributes."""
+        """Take an instance of a class and make a table based on its attributes.
+        
+        Args:
+          prototype: instance, an instance of a class who's attributes we will
+              name columns with
+        
+        Returns:
+          A string with '? NUMERIC/TEXT' entries to be used and the list of
+              column names
+        """
         query = []
         columns = prototype.__dict__.keys()
         columns.sort()
@@ -48,6 +95,14 @@ class DBBackedState(State):
         return ' '.join(query)[0:-1], columns
 
     def _create_query_fragment_from_item(self, item):
+        """Take an item and build a query fragments from its attributes.
+        
+        Args:
+          item: instance, an instance of a class who's attributes we will query
+        
+        Returns:
+          A string of '?,' entries and a list of values to be used in the query
+        """
         query = []
         values = []
         attrs = item.__dict__.keys()
@@ -58,6 +113,15 @@ class DBBackedState(State):
         return ','.join(query), values
 
     def _create_update_query_fragment_from_item(self, item):
+        """Take an item and build a query template for an update.
+        
+        Args:
+          item: instance, an instance of a class who's attributes we will query
+        
+        Returns:
+          A string of 'attribute=?' entries and a list of values to be used in
+              the query
+        """
         update = []
         values = []
         for k, v in item.__dict__.iteritems():
@@ -66,6 +130,15 @@ class DBBackedState(State):
         return ' AND '.join(update), values
 
     def _create_update_setting_fragment_from_item(self, item):
+        """Take an item and build a setting template for an update.
+        
+        Args:
+          item: instance, an instance of a class who's attributes we will set
+        
+        Returns:
+          A string of 'attribute=?' entries and a list of values to be used in
+              the setting command
+        """
         update = []
         values = []
         for k, v in item.__dict__.iteritems():
@@ -74,6 +147,9 @@ class DBBackedState(State):
         return ','.join(update), values 
 
     def initialize(self, name, prototype):
+        """Create a table based on an instance and then add its class to the
+           kind_to_class dictionary.
+        """
         frag, columns = self._create_initialization_fragment_from_prototype(prototype)
         to_execute = 'CREATE TABLE %s (%s)' % (name, frag)
         cursor = self.connection.cursor()
@@ -92,7 +168,11 @@ class DBBackedState(State):
         to_execute = 'SELECT * FROM ?'
         cursor = self.connection.cursor()
         cursor.execute(to_execute, kind)
+        # We need to know what the attribute names are of the class we are
+        # building
         col_name_list = [desc[0] for desc in cursor.description]
+        # Not the most efficient way of doing things, but the db will always
+        # be small enough that it won't matter
         results = cursor.fetchall()
         objects = []
         for result in results:
@@ -106,6 +186,8 @@ class DBBackedState(State):
     def replace(self, kind, old, new):
         query_frag, query_values = self._create_update_query_fragment_from_item(old)
         setting_frag, setting_values = self._create_update_setting_fragment_from_item(new)
+        # Again, not the most efficient, but it works in all cases and doesn't
+        # need any fancy logic
         to_execute = 'UPDATE %s SET %s WHERE %s;' % (kind, setting_frag, query_frag)
         cursor = self.connection.cursor()
         cursor.execute(to_execute, setting_values + query_values)
@@ -123,7 +205,7 @@ class NetworkState(DBBackedState):
         self.initialize('wired', WiredNetwork('', '', ''))
 
     def initialize_wireless_networks(self):
-        self.initialize(WirelessNetwork('wireless', '', '', '', '', 0, ''))
+        self.initialize('wireless', WirelessNetwork('', '', '', '', 0, ''))
 
 
 class ServiceState(DBBackedState):
