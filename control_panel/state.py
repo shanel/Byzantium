@@ -89,7 +89,7 @@ class DBBackedState(State):
         columns = prototype.__dict__.keys()
         columns.sort()
         for column in columns:
-            if type(columns(column)) == int:
+            if type(prototype.__dict__[column]) == int:
                 query.append('? NUMERIC,')
             else:
                 query.append('TEXT,')
