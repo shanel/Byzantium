@@ -166,9 +166,9 @@ class DBBackedState(State):
         self.connection.commit()
 
     def list(self, kind):
-        to_execute = 'SELECT * FROM ?;'
+        to_execute = 'SELECT * FROM %s;' % kind
         cursor = self.connection.cursor()
-        cursor.execute(to_execute, (kind,))
+        cursor.execute(to_execute)
         # We need to know what the attribute names are of the class we are
         # building
         col_name_list = [desc[0] for desc in cursor.description]
