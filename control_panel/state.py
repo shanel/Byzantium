@@ -82,7 +82,7 @@ class DBBackedState(State):
               name columns with
         
         Returns:
-          A string with '? NUMERIC/TEXT' entries to be used and the list of
+          A string with '? NUMERIC/TEXT' entries to be used and the tuple of
               column names
         """
         query = []
@@ -93,7 +93,7 @@ class DBBackedState(State):
                 query.append('? NUMERIC,')
             else:
                 query.append('? TEXT,')
-        return ' '.join(query)[0:-1], columns
+        return ' '.join(query)[0:-1], tuple(columns)
 
     def _create_query_fragment_from_item(self, item):
         """Take an item and build a query fragments from its attributes.
@@ -102,7 +102,7 @@ class DBBackedState(State):
           item: instance, an instance of a class who's attributes we will query
         
         Returns:
-          A string of '?,' entries and a list of values to be used in the query
+          A string of '?,' entries and a tuple of values to be used in the query
         """
         query = []
         values = []
@@ -111,7 +111,7 @@ class DBBackedState(State):
         for attr in attrs:
             query.append('?')
             values.append(item.__dict__[attr])
-        return ','.join(query), values
+        return ','.join(query), tuple(values)
 
     def _create_update_query_fragment_from_item(self, item):
         """Take an item and build a query template for an update.
@@ -120,7 +120,7 @@ class DBBackedState(State):
           item: instance, an instance of a class who's attributes we will query
         
         Returns:
-          A string of 'attribute=?' entries and a list of values to be used in
+          A string of 'attribute=?' entries and a tuple of values to be used in
               the query
         """
         update = []
@@ -128,7 +128,7 @@ class DBBackedState(State):
         for k, v in item.__dict__.iteritems():
             update.append('%s=?' % k)
             values.append(v)
-        return ' AND '.join(update), values
+        return ' AND '.join(update), tuple(values)
 
     def _create_update_setting_fragment_from_item(self, item):
         """Take an item and build a setting template for an update.
@@ -137,7 +137,7 @@ class DBBackedState(State):
           item: instance, an instance of a class who's attributes we will set
         
         Returns:
-          A string of 'attribute=?' entries and a list of values to be used in
+          A string of 'attribute=?' entries and a tuple of values to be used in
               the setting command
         """
         update = []
@@ -145,14 +145,14 @@ class DBBackedState(State):
         for k, v in item.__dict__.iteritems():
             update.append('%s=?' % k)
             values.append(v)
-        return ','.join(update), values 
+        return ','.join(update), tuple(values )
 
     def initialize(self, name, prototype):
         """Create a table based on an instance and then add its class to the
            kind_to_class dictionary.
         """
         frag, columns = self._create_initialization_fragment_from_prototype(prototype)
-        to_execute = 'CREATE TABLE %s (%s)' % (name, frag)
+        to_execute = 'CREATE TABLE %s (%s);' % (name, frag)
         cursor = self.connection.cursor()
         cursor.execute(to_execute, columns)
         self.connection.commit()
@@ -166,9 +166,9 @@ class DBBackedState(State):
         self.connection.commit()
 
     def list(self, kind):
-        to_execute = 'SELECT * FROM ?'
+        to_execute = 'SELECT * FROM ?;'
         cursor = self.connection.cursor()
-        cursor.execute(to_execute, kind)
+        cursor.execute(to_execute, (kind,))
         # We need to know what the attribute names are of the class we are
         # building
         col_name_list = [desc[0] for desc in cursor.description]
