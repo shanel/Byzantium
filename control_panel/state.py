@@ -96,7 +96,7 @@ class DBBackedState(State):
         return ' '.join(query)[0:-1], tuple(columns)
 
     def _create_query_fragment_from_item(self, item):
-        """Take an item and build a query fragments from its attributes.
+        """Take an item and build a query fragment from its attributes.
         
         Args:
           item: instance, an instance of a class who's attributes we will query
