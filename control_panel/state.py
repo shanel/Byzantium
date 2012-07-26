@@ -152,7 +152,7 @@ class DBBackedState(State):
            kind_to_class dictionary.
         """
         frag, columns = self._create_initialization_fragment_from_prototype(prototype)
-        to_execute = 'CREATE TABLE %s (%s);' % (name, frag)
+        to_execute = 'CREATE TABLE %s (%s);' % (name, frag % values)
         cursor = self.connection.cursor()
         cursor.execute(to_execute, columns)
         self.connection.commit()
@@ -160,7 +160,7 @@ class DBBackedState(State):
 
     def create(self, kind, item):
         frag, values = self._create_query_fragment_from_item(item)
-        to_execute = 'INSERT INTO %s VALUES (%s);' % (kind, frag % values)
+        to_execute = 'INSERT INTO %s VALUES (%s);' % (kind, frag)
         cursor = self.connection.cursor()
         cursor.execute(to_execute)
         self.connection.commit()
