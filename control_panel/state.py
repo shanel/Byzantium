@@ -162,7 +162,7 @@ class DBBackedState(State):
         frag, values = self._create_query_fragment_from_item(item)
         to_execute = 'INSERT INTO %s VALUES (%s);' % (kind, frag)
         cursor = self.connection.cursor()
-        cursor.execute(to_execute)
+        cursor.execute(to_execute, values)
         self.connection.commit()
 
     def list(self, kind):
