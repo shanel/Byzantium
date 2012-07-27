@@ -21,7 +21,7 @@ def Error(Exception):
 
 def _sanitize(tainted):
     if 'persistance' in tainted:
-        _ = tainted.pop('persistance')
+        tainted.pop('persistance')
     return tainted
 
 
@@ -133,7 +133,7 @@ class DBBackedState(State):
               column names
         """
         query = []
-        columns = _sanitize(prototype.keys())
+        columns = _sanitize(prototype).keys()
         columns.sort()
         for column in columns:
             if type(prototype[column]) == int:
