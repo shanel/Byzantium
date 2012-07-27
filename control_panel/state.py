@@ -8,10 +8,37 @@
 import abc
 import sqlite3
 
+def Error(Exception):
+    pass
+
 def _sanitize(tainted):
     if 'persistance' in tainted:
         tainted.pop('persistance')
     return tainted
+
+
+def get_matching(pattern, objects):
+    """Take a dict and find all objects in list with matching values.
+    
+    Args:
+      pattern: dict, a dict to match off
+      objects: list, list of objects to check against
+
+    Returns:
+      A list of matching objects
+
+    Raises:
+      Error: if the keys of the pattern are not valid object attrs
+    """
+    contenders = []
+    keys = set(pattern.keys())
+    vals = set(pattern.values())
+    for obj in objects:
+        if not set(obj.__dict__.keys()) >= keys:
+            raise Error('Bad pattern passed.')
+        if set(obj.__dict__.values()) >= vals:
+            contenders.append(obj)
+    return contenders
 
 
 class State(object):
@@ -262,48 +289,58 @@ class Model(object):
                 
 class WiredNetwork(Model):
     
-    def __init__(self, interface, gateway, enabled, persistance):
+    def __init__(self, interface, gateway, enabled, persistance, testing=False):
         self.interface = interface
         self.gateway = gateway
         self.enabled = enabled
-        super(WiredNetwork, self).__init__('wired', persistance)
+        super(WiredNetwork, self).__init__('wired', persistance, testing)
+        
+    # probably going to want something like the activate/set_ip/tcip functionality here
 
 
 class WirelessNetwork(Model):
 
-    def __init__(self, client_interface, mesh_interface, gateway, enabled, channel, essid, persistance):
+    def __init__(self, client_interface, mesh_interface, gateway, enabled, channel, essid, persistance, testing=False):
         self.client_interface = client_interface
         self.mesh_interface = mesh_interface
         self.gateway = gateway
         self.enabled = enabled
         self.channel = channel
         self.essid = essid
-        super(WirelessNetwork, self).__init__('wireless', persistance)
+        super(WirelessNetwork, self).__init__('wireless', persistance, testing)
+        
+    # probably going to want something like the activate/set_ip/tcip functionality here
 
 
 class Mesh(Model):
 
-    def __init__(self, interface, protocol, enabled, persistance):
+    def __init__(self, interface, protocol, enabled, persistance, testing=False):
         self.interface = interface
         self.protocol = protocol
         self.enabled = enabled
-        super(Mesh, self).__init__('meshes', persistance)
+        super(Mesh, self).__init__('meshes', persistance, testing)
+    
+    # probably going to want some method to update_babeld in here
 
 
 class Daemon(Model):
 
-    def __init__(self, name, showtouser, port, initscript, status, persistance):
+    def __init__(self, name, showtouser, port, initscript, status, persistance, testing=False):
         self.name = name
         self.status = status
         self.showtouser = showtouser
         self.port = port
         self.initscript = initscript
-        super(Daemon, self).__init__('daemons', persistance)
+        super(Daemon, self).__init__('daemons', persistance, testing)
+        
+    # probably going to want something like toggle_service in here
 
 
 class WebApp(Model):
 
-    def __init__(self, name, status, persistance):
+    def __init__(self, name, status, persistance, testing=False):
         self.name = name
         self.status = status
-        super(WebApp, self).__init__('webapps', persistance)
+        super(WebApp, self).__init__('webapps', persistance, testing)
+        
+    # probably going to want something like toggle_service in here

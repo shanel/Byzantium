@@ -62,7 +62,6 @@ class DBBackedStateTest(unittest.TestCase):
         expected_vals = ('it is text', 3)
         self.assertEqual(sorted(expected_vals), sorted(result_vals))
 
-    
-        
+
 if __name__ == '__main__':
     unittest.main()
