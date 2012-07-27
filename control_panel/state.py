@@ -310,7 +310,7 @@ class Model(object):
         self.kind = kind
         self.persistance = persistance
         if not testing:
-            if not self.persistance.exists(self.kind, self.__class__, self.__dict__):
+            if not self.persistance.exists(self.kind, self.__dict__):
               self.persistance.create(self.__dict__.copy())
     
     def list(self):
