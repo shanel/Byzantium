@@ -153,7 +153,7 @@ class DBBackedState(State):
         """
         query = []
         values = []
-        attrs = _sanitize(item.keys())
+        attrs = _sanitize(item).keys()
         attrs.sort()
         for attr in attrs:
             query.append('?')
