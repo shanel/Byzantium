@@ -242,6 +242,8 @@ class DBBackedState(State):
             attrs = {}
             for i, v in enumerate(result):
                 attrs[col_name_list[i]] = v
+            attrs['kind'] = kind
+            attrs['persistance'] = self
             obj = klass(**attrs)
             objects.append(obj)
         return objects
