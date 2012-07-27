@@ -255,14 +255,21 @@ class NetworkState(DBBackedState):
 
     def __init__(self, db_path):
         super(NetworkState, self).__init__(db_path)
-        self.initialize(WiredNetwork('', '', ''))
-        self.initialize(WirelessNetwork('', '', '', '', 0, ''))
+        wired = {'interface': '', 'gateway': '', 'enabled': '', 'kind': 'wired'}
+        wireless = {'client_interface': '', 'mesh_interface': '',
+                    'gateway': '', 'enabled': '', 'channel': 0, 'essid': '',
+                    'kind': 'wireless'}
+        self.initialize(wired)
+        self.initialize(wireless)
 
 
 class NetworkState(DBBackedState):
 
     def __init__(self, db_path):
         super(NetworkState, self).__init__(db_path)
+        mesh = {'interface': '', 'protocol': '', 'enabled': '', 'kind': 'meshes'}
+        daemon = {'name': '', 'showtouser': '', 'port': 0, 'initscript': '', 'status': '', 'kind': 'daemons'}
+        webapp = {'name': '', 'status': '', 'kind': 'webapps'}
         self.initialize(Daemon('', '', 0, '', ''))
         self.initialize(WebApp('', ''))
         self.initialize(Mesh('', '', ''))
