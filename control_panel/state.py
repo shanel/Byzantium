@@ -318,7 +318,7 @@ class WiredNetwork(Model):
         self.enabled = enabled
         self.kind = 'wired'
         self.persistance = persistance
-        super(WiredNetwork, self).__init__(self.persistance, testing)
+        super(WiredNetwork, self).__init__(persistance, testing)
         
     # probably going to want something like the activate/set_ip/tcip functionality here
 
@@ -334,7 +334,7 @@ class WirelessNetwork(Model):
         self.essid = essid
         self.kind = 'wireless'
         self.persistance = persistance
-        super(WirelessNetwork, self).__init__(self.persistance, testing)
+        super(WirelessNetwork, self).__init__(persistance, testing)
         
     # probably going to want something like the activate/set_ip/tcip functionality here
 
@@ -347,7 +347,7 @@ class Mesh(Model):
         self.enabled = enabled
         self.kind = 'meshes'
         self.persistance = persistance
-        super(Mesh, self).__init__(self.persistance, testing)
+        super(Mesh, self).__init__(persistance, testing)
     
     # probably going to want some method to update_babeld in here
 
@@ -362,7 +362,7 @@ class Daemon(Model):
         self.initscript = initscript
         self.kind = 'daemons'
         self.persistance = persistance
-        super(Daemon, self).__init__(self.persistance, testing)
+        super(Daemon, self).__init__(persistance, testing)
         
     # probably going to want something like toggle_service in here
 
@@ -374,6 +374,6 @@ class WebApp(Model):
         self.status = status
         self.kind = 'webapps'
         self.persistance = persistance
-        super(WebApp, self).__init__(self.persistance, testing)
+        super(WebApp, self).__init__(persistance, testing)
         
     # probably going to want something like toggle_service in here
