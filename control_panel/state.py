@@ -316,7 +316,7 @@ class Model(object):
     def list(self):
         return self.persistance.list(self.kind, self.__class__)
     
-    def replace(self, **kwagrs):
+    def replace(self, **kwargs):
         old = self.__dict__.copy()
         for k, v in kwargs:
             if k not in ('kind', 'persistance'):
