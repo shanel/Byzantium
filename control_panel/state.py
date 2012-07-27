@@ -233,7 +233,7 @@ class DBBackedState(State):
         cursor.execute(to_execute)
         # We need to know what the attribute names are of the class we are
         # building
-        col_name_list = [desc[0] for desc in cursor.description()]
+        col_name_list = [desc[0] for desc in cursor.description]
         # Not the most efficient way of doing things, but the db will always
         # be small enough that it won't matter
         results = cursor.fetchall()

@@ -81,8 +81,8 @@ class DBBackedStateTest(unittest.TestCase):
         one_obj = Simple(attr1='', attr2=0)
         two_obj = Simple(attr1='str', attr2=0)
         mock_cursor = flexmock()
+        mock_cursor.description = [('attr1',), ('attr2',)]
         mock_cursor.should_receive('execute').once
-        mock_cursor.should_receive('description').and_return([('attr1',), ('attr2',)])
         mock_cursor.should_receive('fetchall').once.and_return([('', 0), ('str', 1)])
         self.connection.should_receive('cursor').once.and_return(mock_cursor)
         returns = self.state.list('attrs', Simple)
