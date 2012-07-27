@@ -294,8 +294,7 @@ class ServiceState(DBBackedState):
 
 class Model(object):
     
-    def __init__(self, kind, persistance, testing=False):
-        self.kind = kind
+    def __init__(self, persistance, testing=False):
         self.persistance = persistance
         if not testing:
             self.persistance.create(self.__dict__)
@@ -317,7 +316,9 @@ class WiredNetwork(Model):
         self.interface = interface
         self.gateway = gateway
         self.enabled = enabled
-        super(WiredNetwork, self).__init__('wired', persistance, testing)
+        self.kind = 'wired'
+        self.persistance = persistance
+        super(WiredNetwork, self).__init__(self.persistance, testing)
         
     # probably going to want something like the activate/set_ip/tcip functionality here
 
@@ -331,7 +332,9 @@ class WirelessNetwork(Model):
         self.enabled = enabled
         self.channel = channel
         self.essid = essid
-        super(WirelessNetwork, self).__init__('wireless', persistance, testing)
+        self.kind = 'wireless'
+        self.persistance = persistance
+        super(WirelessNetwork, self).__init__(self.persistance, testing)
         
     # probably going to want something like the activate/set_ip/tcip functionality here
 
@@ -342,7 +345,9 @@ class Mesh(Model):
         self.interface = interface
         self.protocol = protocol
         self.enabled = enabled
-        super(Mesh, self).__init__('meshes', persistance, testing)
+        self.kind = 'meshes'
+        self.persistance = persistance
+        super(Mesh, self).__init__(self.persistance, testing)
     
     # probably going to want some method to update_babeld in here
 
@@ -355,7 +360,9 @@ class Daemon(Model):
         self.showtouser = showtouser
         self.port = port
         self.initscript = initscript
-        super(Daemon, self).__init__('daemons', persistance, testing)
+        self.kind = 'daemons'
+        self.persistance = persistance
+        super(Daemon, self).__init__(self.persistance, testing)
         
     # probably going to want something like toggle_service in here
 
@@ -365,6 +372,8 @@ class WebApp(Model):
     def __init__(self, name, status, persistance, testing=False):
         self.name = name
         self.status = status
-        super(WebApp, self).__init__('webapps', persistance, testing)
+        self.kind = 'webapps'
+        self.persistance = persistance
+        super(WebApp, self).__init__(self.persistance, testing)
         
     # probably going to want something like toggle_service in here
