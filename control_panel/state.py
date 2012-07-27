@@ -14,8 +14,10 @@
 import abc
 import sqlite3
 
+
 def Error(Exception):
     pass
+
 
 def _sanitize(tainted):
     if 'persistance' in tainted:
@@ -276,12 +278,12 @@ class NetworkState(DBBackedState):
 
     def __init__(self, db_path):
         super(NetworkState, self).__init__(db_path)
-        mesh = {'interface': '', 'protocol': '', 'enabled': '', 'kind': 'meshes'}
-        daemon = {'name': '', 'showtouser': '', 'port': 0, 'initscript': '', 'status': '', 'kind': 'daemons'}
-        webapp = {'name': '', 'status': '', 'kind': 'webapps'}
-        self.initialize(Daemon('', '', 0, '', ''))
-        self.initialize(WebApp('', ''))
-        self.initialize(Mesh('', '', ''))
+        meshes = {'interface': '', 'protocol': '', 'enabled': '', 'kind': 'meshes'}
+        daemons = {'name': '', 'showtouser': '', 'port': 0, 'initscript': '', 'status': '', 'kind': 'daemons'}
+        webapps = {'name': '', 'status': '', 'kind': 'webapps'}
+        self.initialize(meshes)
+        self.initialize(daemons)
+        self.initialize(webapps)
 
 
 class Model(object):
