@@ -295,12 +295,9 @@ class ServiceState(DBBackedState):
 class Model(object):
     
     def __init__(self, persistance, testing=False):
-        print "Dict as we come into Model: %s" % self.__dict__
         self.persistance = persistance
-        print "Dict after resetting self.persistance: %s" % self.__dict__
         if not testing:
-            self.persistance.create(self.__dict__)
-            print "Dict after create call: %s" % self.__dict__
+            self.persistance.create(self.__dict__.copy())
     
     def list(self):
         return self.persistance.list(self.kind, self.__class__)
@@ -320,7 +317,6 @@ class WiredNetwork(Model):
         self.gateway = gateway
         self.enabled = enabled
         self.kind = 'wired'
-        self.persistance = persistance
         super(WiredNetwork, self).__init__(persistance, testing)
         
     # probably going to want something like the activate/set_ip/tcip functionality here
@@ -336,7 +332,6 @@ class WirelessNetwork(Model):
         self.channel = channel
         self.essid = essid
         self.kind = 'wireless'
-        self.persistance = persistance
         super(WirelessNetwork, self).__init__(persistance, testing)
         
     # probably going to want something like the activate/set_ip/tcip functionality here
@@ -349,7 +344,6 @@ class Mesh(Model):
         self.protocol = protocol
         self.enabled = enabled
         self.kind = 'meshes'
-        self.persistance = persistance
         super(Mesh, self).__init__(persistance, testing)
     
     # probably going to want some method to update_babeld in here
@@ -364,7 +358,6 @@ class Daemon(Model):
         self.port = port
         self.initscript = initscript
         self.kind = 'daemons'
-        self.persistance = persistance
         super(Daemon, self).__init__(persistance, testing)
         
     # probably going to want something like toggle_service in here
@@ -376,8 +369,6 @@ class WebApp(Model):
         self.name = name
         self.status = status
         self.kind = 'webapps'
-        self.persistance = persistance
-        print "__dict__ before super: %s" % self.__dict__
         super(WebApp, self).__init__(persistance, testing)
         
     # probably going to want something like toggle_service in here
