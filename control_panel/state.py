@@ -111,6 +111,14 @@ class DBBackedState(State):
         self.db_path = db_path
         self.connection = sqlite3.connect(self.db_path)
 
+    def _execute_and_commit(self, query, values=None):
+        cursor = self.connection.cursor()
+        if values:
+            cursor.execute(query, values)
+        else:
+            cursor.execute(query)
+        self.connection.commit()
+
     def _create_initialization_fragment_from_prototype(self, prototype):
         """Take an instance of a class and make a table based on its attributes.
         
@@ -195,9 +203,7 @@ class DBBackedState(State):
         kind = prototype.pop('kind')
         frag, columns = self._create_initialization_fragment_from_prototype(prototype)
         to_execute = 'CREATE TABLE IF NOT EXISTS %s (%s);' % (kind, frag % columns)
-        cursor = self.connection.cursor()
-        cursor.execute(to_execute)
-        self.connection.commit()
+        self._execute_and_commit(to_execute)
 
     def create(self, item):
         """Insert or replace an entry in the backend.
@@ -205,12 +211,10 @@ class DBBackedState(State):
         Args:
           item: dict, a dict who's attributes we'll insert/replace
         """
-        kind = prototype.pop('kind')
+        kind = item.pop('kind')
         frag, values = self._create_query_fragment_from_item(item)
         to_execute = 'INSERT OR REPLACE INTO %s VALUES (%s);' % (kind, frag)
-        cursor = self.connection.cursor()
-        cursor.execute(to_execute, values)
-        self.connection.commit()
+        self._execute_and_commit(to_execute, values)
 
     def list(self, kind, klass):
         """List all entries for a given kind, returning them as klass objects.
@@ -227,7 +231,7 @@ class DBBackedState(State):
         cursor.execute(to_execute)
         # We need to know what the attribute names are of the class we are
         # building
-        col_name_list = [desc[0] for desc in cursor.description]
+        col_name_list = [desc[0] for desc in cursor.description()]
         # Not the most efficient way of doing things, but the db will always
         # be small enough that it won't matter
         results = cursor.fetchall()
@@ -247,14 +251,13 @@ class DBBackedState(State):
           old: dict, a dict of the old data (what we search for)
           new: dict, a dict of the replacement data
         """
+        kind = old.pop('kind')
         query_frag, query_values = self._create_update_query_fragment_from_item(old)
         setting_frag, setting_values = self._create_update_setting_fragment_from_item(new)
         # Again, not the most efficient, but it works in all cases and doesn't
         # need any fancy logic
-        to_execute = 'UPDATE OR REPLACE %s SET %s WHERE %s;' % (old.kind, setting_frag, query_frag)
-        cursor = self.connection.cursor()
-        cursor.execute(to_execute, setting_values + query_values)
-        self.connection.commit()
+        to_execute = 'UPDATE OR REPLACE %s SET %s WHERE %s;' % (kind, setting_frag, query_frag)
+        self._execute_and_commit(to_execute, setting_values + query_values)
 
 
 class NetworkState(DBBackedState):
