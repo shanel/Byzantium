@@ -8,8 +8,11 @@
 import abc
 import sqlite3
 
-def _valid(value):
-    return value not in ('kind', 'persistance')
+def _sanitize(tainted):
+    if 'persistance' in tainted:
+        tainted.pop('persistance')
+    return tainted
+
 
 class State(object):
     """Metaclass State object."""
@@ -74,14 +77,12 @@ class DBBackedState(State):
         super(DBBackedState, self).__init__()
         self.db_path = db_path
         self.connection = sqlite3.connect(self.db_path)
-        # Not quite sure if kind_to_class should be here or in State
-        self.kind_to_class = {}
 
     def _create_initialization_fragment_from_prototype(self, prototype):
         """Take an instance of a class and make a table based on its attributes.
         
         Args:
-          prototype: instance, an instance of a class who's attributes we will
+          prototype: dict, dict of attributes we will
               name columns with
         
         Returns:
@@ -89,10 +90,10 @@ class DBBackedState(State):
               column names
         """
         query = []
-        columns = filter(_valid, prototype.__dict__.keys())
+        columns = _sanitize(prototype.keys())
         columns.sort()
         for column in columns:
-            if type(prototype.__dict__[column]) == int:
+            if type(prototype[column]) == int:
                 query.append('%s NUMERIC,')
             else:
                 query.append('%s TEXT,')
@@ -109,11 +110,11 @@ class DBBackedState(State):
         """
         query = []
         values = []
-        attrs = filter(_valid, item.__dict__.keys())
+        attrs = _sanitize(item.keys())
         attrs.sort()
         for attr in attrs:
             query.append('?')
-            values.append(item.__dict__[attr])
+            values.append(item[attr])
         return ','.join(query), tuple(values)
 
     def _create_update_query_fragment_from_item(self, item):
@@ -128,7 +129,7 @@ class DBBackedState(State):
         """
         update = []
         values = []
-        for k, v in item.__dict__.iteritems():
+        for k, v in item.iteritems():
             if k not in ('kind', 'persistance'):
                 update.append('%s=?' % k)
                 values.append(v)
@@ -138,7 +139,7 @@ class DBBackedState(State):
         """Take an item and build a setting template for an update.
         
         Args:
-          item: instance, an instance of a class who's attributes we will set
+          item: dict, a dict who's attributes we will use
         
         Returns:
           A string of 'attribute=?' entries and a tuple of values to be used in
@@ -146,31 +147,48 @@ class DBBackedState(State):
         """
         update = []
         values = []
-        for k, v in item.__dict__.iteritems():
+        for k, v in item.iteritems():
             if k not in ('kind', 'persistance'):
                 update.append('%s=?' % k)
                 values.append(v)
         return ','.join(update), tuple(values )
 
     def initialize(self, prototype):
-        """Create a table based on an instance and then add its class to the
-           kind_to_class dictionary.
+        """Create a table based on a prototype dict.
+        
+        Args:
+          prototype: dict, a dict to base column names off
         """
+        kind = prototype.pop('kind')
         frag, columns = self._create_initialization_fragment_from_prototype(prototype)
-        to_execute = 'CREATE TABLE IF NOT EXISTS %s (%s);' % (prototype.kind, frag % columns)
+        to_execute = 'CREATE TABLE IF NOT EXISTS %s (%s);' % (kind, frag % columns)
         cursor = self.connection.cursor()
         cursor.execute(to_execute)
         self.connection.commit()
-        self.kind_to_class[name] = prototype.__class__
 
     def create(self, item):
+        """Insert or replace an entry in the backend.
+        
+        Args:
+          item: dict, a dict who's attributes we'll insert/replace
+        """
+        kind = prototype.pop('kind')
         frag, values = self._create_query_fragment_from_item(item)
-        to_execute = 'INSERT OR REPLACE INTO %s VALUES (%s);' % (item.kind, frag)
+        to_execute = 'INSERT OR REPLACE INTO %s VALUES (%s);' % (kind, frag)
         cursor = self.connection.cursor()
         cursor.execute(to_execute, values)
         self.connection.commit()
 
-    def list(self, kind):
+    def list(self, kind, klass):
+        """List all entries for a given kind, returning them as klass objects.
+        
+        Args:
+          kind: str, the kind of entry we are looking for
+          klass: class, the class type we should build out of each result
+          
+         Returns:
+           a list of klass objects based on results from the backend call
+        """
         to_execute = 'SELECT * FROM %s;' % kind
         cursor = self.connection.cursor()
         cursor.execute(to_execute)
@@ -185,16 +203,22 @@ class DBBackedState(State):
             attrs = {}
             for i, v in enumerate(result):
                 attrs[col_name_list[i]] = v
-            obj = self.kind_to_class[kind](**attrs)
+            obj = klass(**attrs)
             objects.append(obj)
         return objects
 
-    def replace(self, kind, old, new):
+    def replace(self, old, new):
+        """Replace an old entry with a new one.
+        
+        Args:
+          old: dict, a dict of the old data (what we search for)
+          new: dict, a dict of the replacement data
+        """
         query_frag, query_values = self._create_update_query_fragment_from_item(old)
         setting_frag, setting_values = self._create_update_setting_fragment_from_item(new)
         # Again, not the most efficient, but it works in all cases and doesn't
         # need any fancy logic
-        to_execute = 'UPDATE OR REPLACE %s SET %s WHERE %s;' % (kind, setting_frag, query_frag)
+        to_execute = 'UPDATE OR REPLACE %s SET %s WHERE %s;' % (old.kind, setting_frag, query_frag)
         cursor = self.connection.cursor()
         cursor.execute(to_execute, setting_values + query_values)
         self.connection.commit()
@@ -204,13 +228,7 @@ class NetworkState(DBBackedState):
 
     def __init__(self, db_path):
         super(NetworkState, self).__init__(db_path)
-        self.initialize_wired_networks()
-        self.initialize_wireless_networks()
-
-    def initialize_wired_networks(self):
         self.initialize(WiredNetwork('', '', ''))
-
-    def initialize_wireless_networks(self):
         self.initialize(WirelessNetwork('', '', '', '', 0, ''))
 
 
@@ -218,29 +236,21 @@ class NetworkState(DBBackedState):
 
     def __init__(self, db_path):
         super(NetworkState, self).__init__(db_path)
-        self.initialize_daemons()
-        self.initialize_webaps()
-        self.initialize_mesh_networks()
-
-    def initialize_daemons(self):
         self.initialize(Daemon('', '', 0, '', ''))
-
-    def initialize_webaps(self):
         self.initialize(WebApp('', ''))
-
-    def initialize_mesh_networks(self):
         self.initialize(Mesh('', '', ''))
 
 
 class Model(object):
     
-    def __init__(self, kind, persistance):
-        self.persistance = persistance
+    def __init__(self, kind, persistance, testing=False):
         self.kind = kind
-        self.persistance.create(self)
+        self.persistance = persistance
+        if not testing:
+            self.persistance.create(self.__dict__)
     
     def list(self):
-        return self.persistance.list(self.kind)
+        return self.persistance.list(self.kind, self.__class__)
     
     def replace(self, **kwagrs):
         old = self.__dict__.copy()
@@ -250,7 +260,6 @@ class Model(object):
         self.persistance.replace(self.__class__(old), self)
                 
                 
-
 class WiredNetwork(Model):
     
     def __init__(self, interface, gateway, enabled, persistance):

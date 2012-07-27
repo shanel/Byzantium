@@ -27,7 +27,7 @@ class DBBackedStateTest(unittest.TestCase):
         self.state = state.DBBackedState('/no/real/path')
     
     def test_create_initialization_fragment_from_prototype(self):
-        daemon = Simple()
+        daemon = {'attr1': 'it is text', 'attr2': 3}
         result_str, result_vals = self.state._create_initialization_fragment_from_prototype(daemon)
         expected_str = '%s TEXT, %s NUMERIC'
         expected_vals = ('attr1', 'attr2')
@@ -35,7 +35,7 @@ class DBBackedStateTest(unittest.TestCase):
         self.assertEqual(expected_vals, result_vals)
         
     def test_create_query_fragment_from_item(self):
-        daemon = Simple()
+        daemon = {'attr1': 'it is text', 'attr2': 3}
         result_str, result_vals = self.state._create_query_fragment_from_item(daemon)
         expected_str = '?,?'
         expected_vals = ('it is text', 3)
@@ -43,7 +43,7 @@ class DBBackedStateTest(unittest.TestCase):
         self.assertEqual(expected_vals, result_vals)
         
     def test_create_update_query_fragment_from_item(self):
-        daemon = Simple()
+        daemon = {'attr1': 'it is text', 'attr2': 3}
         result_str, result_vals = self.state._create_update_query_fragment_from_item(daemon)
         # Can't count on any particular implementation spitting out the same order, so...
         self.assertEqual(1, len(re.findall('AND', result_str)))
@@ -53,7 +53,7 @@ class DBBackedStateTest(unittest.TestCase):
         self.assertEqual(sorted(expected_vals), sorted(result_vals))
         
     def test_create_update_setting_fragment_from_item(self):
-        daemon = Simple()
+        daemon = {'attr1': 'it is text', 'attr2': 3}
         result_str, result_vals = self.state._create_update_setting_fragment_from_item(daemon)
         # Can't count on any particular implementation spitting out the same order, so...
         self.assertEqual(1, len(re.findall(',', result_str)))
@@ -61,7 +61,8 @@ class DBBackedStateTest(unittest.TestCase):
             self.assertTrue(attr in result_str)
         expected_vals = ('it is text', 3)
         self.assertEqual(sorted(expected_vals), sorted(result_vals))
-        
+
+    
         
 if __name__ == '__main__':
     unittest.main()
