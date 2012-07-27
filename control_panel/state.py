@@ -218,19 +218,25 @@ class DBBackedState(State):
         to_execute = 'INSERT OR REPLACE INTO %s VALUES (%s);' % (kind, frag)
         self._execute_and_commit(to_execute, values)
 
-    def list(self, kind, klass):
+    def list(self, kind, klass, attrs=None):
         """List all entries for a given kind, returning them as klass objects.
         
         Args:
           kind: str, the kind of entry we are looking for
           klass: class, the class type we should build out of each result
+          attrs: dict, dict of attrs specifically being checked for
           
          Returns:
            a list of klass objects based on results from the backend call
         """
-        to_execute = 'SELECT * FROM %s;' % kind
         cursor = self.connection.cursor()
-        cursor.execute(to_execute)
+        if attrs:
+            template, vals = self._create_update_query_fragment_from_item(attrs)
+            to_execute = 'SELECT * FROM %s WHERE %s' % (kind, template)
+            cursor.execute(to_execute, vals)
+        else:
+          to_execute = 'SELECT * FROM %s;' % kind
+          cursor.execute(to_execute)
         # We need to know what the attribute names are of the class we are
         # building
         col_name_list = [desc[0] for desc in cursor.description]
@@ -299,7 +305,8 @@ class Model(object):
         self.kind = kind
         self.persistance = persistance
         if not testing:
-            self.persistance.create(self.__dict__.copy())
+            if not self.persistance.list(self.kind, self.__class__, self.__dict__):
+              self.persistance.create(self.__dict__.copy())
     
     def list(self):
         return self.persistance.list(self.kind, self.__class__)

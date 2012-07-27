@@ -14,10 +14,11 @@ import unittest
 
 class Simple(object):
     
-    def __init__(self, attr1='it is text', attr2=3):
+    def __init__(self, attr1='it is text', attr2=3, persistance=None):
         self.attr1 = attr1
         self.attr2 = attr2
         self.kind = 'attrs'
+        self.persistance = persistance
 
 
 class DBBackedStateTest(unittest.TestCase):
@@ -86,8 +87,8 @@ class DBBackedStateTest(unittest.TestCase):
         mock_cursor.should_receive('fetchall').once.and_return([('', 0), ('str', 1)])
         self.connection.should_receive('cursor').once.and_return(mock_cursor)
         returns = self.state.list('attrs', Simple)
-        self.assertEqual(one_dict, returns[0].__dict__)
-        self.assertEqual(two_dict, returns[1].__dict__)
+        self.assertTrue(set(one_dict.values()) <= set(returns[0].__dict__.values()))
+        self.assertTrue(set(two_dict.values()) <= set(returns[1].__dict__.values()))
     
     def test_replace(self):
         one_dict = {'attr1': '', 'attr2': 0, 'kind': 'attrs'}
