@@ -8,6 +8,9 @@
 import abc
 import sqlite3
 
+def _valid(value):
+    return value not in ('kind', 'persistance')
+
 class State(object):
     """Metaclass State object."""
     __metaclass__ = abc.ABCMeta
@@ -86,7 +89,7 @@ class DBBackedState(State):
               column names
         """
         query = []
-        columns = prototype.__dict__.keys()
+        columns = filter(_valid, prototype.__dict__.keys())
         columns.sort()
         for column in columns:
             if type(prototype.__dict__[column]) == int:
@@ -106,7 +109,7 @@ class DBBackedState(State):
         """
         query = []
         values = []
-        attrs = item.__dict__.keys()
+        attrs = filter(_valid, item.__dict__.keys())
         attrs.sort()
         for attr in attrs:
             query.append('?')
@@ -126,8 +129,9 @@ class DBBackedState(State):
         update = []
         values = []
         for k, v in item.__dict__.iteritems():
-            update.append('%s=?' % k)
-            values.append(v)
+            if k not in ('kind', 'persistance'):
+                update.append('%s=?' % k)
+                values.append(v)
         return ' AND '.join(update), tuple(values)
 
     def _create_update_setting_fragment_from_item(self, item):
@@ -143,24 +147,25 @@ class DBBackedState(State):
         update = []
         values = []
         for k, v in item.__dict__.iteritems():
-            update.append('%s=?' % k)
-            values.append(v)
+            if k not in ('kind', 'persistance'):
+                update.append('%s=?' % k)
+                values.append(v)
         return ','.join(update), tuple(values )
 
-    def initialize(self, name, prototype):
+    def initialize(self, prototype):
         """Create a table based on an instance and then add its class to the
            kind_to_class dictionary.
         """
         frag, columns = self._create_initialization_fragment_from_prototype(prototype)
-        to_execute = 'CREATE TABLE %s (%s);' % (name, frag % columns)
+        to_execute = 'CREATE TABLE IF NOT EXISTS %s (%s);' % (prototype.kind, frag % columns)
         cursor = self.connection.cursor()
         cursor.execute(to_execute)
         self.connection.commit()
         self.kind_to_class[name] = prototype.__class__
 
-    def create(self, kind, item):
+    def create(self, item):
         frag, values = self._create_query_fragment_from_item(item)
-        to_execute = 'INSERT INTO %s VALUES (%s);' % (kind, frag)
+        to_execute = 'INSERT OR REPLACE INTO %s VALUES (%s);' % (item.kind, frag)
         cursor = self.connection.cursor()
         cursor.execute(to_execute, values)
         self.connection.commit()
@@ -189,7 +194,7 @@ class DBBackedState(State):
         setting_frag, setting_values = self._create_update_setting_fragment_from_item(new)
         # Again, not the most efficient, but it works in all cases and doesn't
         # need any fancy logic
-        to_execute = 'UPDATE %s SET %s WHERE %s;' % (kind, setting_frag, query_frag)
+        to_execute = 'UPDATE OR REPLACE %s SET %s WHERE %s;' % (kind, setting_frag, query_frag)
         cursor = self.connection.cursor()
         cursor.execute(to_execute, setting_values + query_values)
         self.connection.commit()
@@ -203,10 +208,10 @@ class NetworkState(DBBackedState):
         self.initialize_wireless_networks()
 
     def initialize_wired_networks(self):
-        self.initialize('wired', WiredNetwork('', '', ''))
+        self.initialize(WiredNetwork('', '', ''))
 
     def initialize_wireless_networks(self):
-        self.initialize('wireless', WirelessNetwork('', '', '', '', 0, ''))
+        self.initialize(WirelessNetwork('', '', '', '', 0, ''))
 
 
 class NetworkState(DBBackedState):
@@ -218,54 +223,82 @@ class NetworkState(DBBackedState):
         self.initialize_mesh_networks()
 
     def initialize_daemons(self):
-        self.initialize('daemons', Daemon('', '', 0, '', ''))
+        self.initialize(Daemon('', '', 0, '', ''))
 
     def initialize_webaps(self):
-        self.initialize('webapps', WebApp('', ''))
+        self.initialize(WebApp('', ''))
 
     def initialize_mesh_networks(self):
-        self.initialize('meshes', Mesh('', '', ''))
+        self.initialize(Mesh('', '', ''))
 
 
-class WiredNetwork(object):
+class Model(object):
     
-    def __init__(self, interface, gateway, enabled):
+    def __init__(self, kind, persistance):
+        self.persistance = persistance
+        self.kind = kind
+        self.persistance.create(self)
+    
+    def list(self):
+        return self.persistance.list(self.kind)
+    
+    def replace(self, **kwagrs):
+        old = self.__dict__.copy()
+        for k, v in kwargs:
+            if k not in ('kind', 'persistance'):
+                setattr(self, k, v)
+        self.persistance.replace(self.__class__(old), self)
+                
+                
+
+class WiredNetwork(Model):
+    # make this Model-ly
+    # self.persistance = a passed in State object, then just pass 'self'
+    # in as the item :)
+    # Will need to copy state for replace
+    
+    def __init__(self, interface, gateway, enabled, persistance):
         self.interface = interface
         self.gateway = gateway
         self.enabled = enabled
+        super(WiredNetwork, self).__init__('wired', persistance)
 
 
-class WirelessNetwork(object):
+class WirelessNetwork(Model):
 
-    def __init__(self, client_interface, mesh_interface, gateway, enabled, channel, essid):
+    def __init__(self, client_interface, mesh_interface, gateway, enabled, channel, essid, persistance):
         self.client_interface = client_interface
         self.mesh_interface = mesh_interface
         self.gateway = gateway
         self.enabled = enabled
         self.channel = channel
         self.essid = essid
+        super(WirelessNetwork, self).__init__('wireless', persistance)
 
 
-class Mesh(object):
+class Mesh(Model):
 
-    def __init__(self, interface, protocol, enabled):
+    def __init__(self, interface, protocol, enabled, persistance):
         self.interface = interface
         self.protocol = protocol
         self.enabled = enabled
+        super(Mesh, self).__init__('meshes', persistance)
 
 
-class Daemon(object):
+class Daemon(Model):
 
-    def __init__(self, name, showtouser, port, initscript, status):
+    def __init__(self, name, showtouser, port, initscript, status, persistance):
         self.name = name
         self.status = status
         self.showtouser = showtouser
         self.port = port
         self.initscript = initscript
+        super(Daemon, self).__init__('daemons', persistance)
 
 
-class WebApp(object):
+class WebApp(Model):
 
-    def __init__(self, name, status):
+    def __init__(self, name, status, persistance):
         self.name = name
         self.status = status
+        super(WebApp, self).__init__('webapps', persistance)
