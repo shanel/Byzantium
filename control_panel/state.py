@@ -3,6 +3,12 @@
 
 # Project Byzantium: http://wiki.hacdc.org/index.php/Byzantium
 # License: GPLv3
+#
+# Stuff in here should probably be broken out into a number of files:
+#
+# State-related stuff can probably stay here
+# Model should probably go into something like models/base.py or models/model.py
+# Everything that inherits from Model should go in its own file in a models/ directory
 
 
 import abc
