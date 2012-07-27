@@ -218,6 +218,13 @@ class DBBackedState(State):
         to_execute = 'INSERT OR REPLACE INTO %s VALUES (%s);' % (kind, frag)
         self._execute_and_commit(to_execute, values)
 
+    def exists(self, kind, attrs):
+        cursor = self.connection.cursor()
+        template, vals = self._create_update_query_fragment_from_item(attrs)
+        to_execute = 'SELECT * FROM %s WHERE %s' % (kind, template)
+        cursor.execute(to_execute, vals)
+        return cursor.fetchall()
+
     def list(self, kind, klass, attrs=None):
         """List all entries for a given kind, returning them as klass objects.
         
@@ -231,18 +238,16 @@ class DBBackedState(State):
         """
         cursor = self.connection.cursor()
         if attrs:
-            template, vals = self._create_update_query_fragment_from_item(attrs)
-            to_execute = 'SELECT * FROM %s WHERE %s' % (kind, template)
-            cursor.execute(to_execute, vals)
+            results = self.exists(kind, attrs)
         else:
           to_execute = 'SELECT * FROM %s;' % kind
           cursor.execute(to_execute)
+          # Not the most efficient way of doing things, but the db will always
+          # be small enough that it won't matter
+          results = cursor.fetchall()
         # We need to know what the attribute names are of the class we are
         # building
         col_name_list = [desc[0] for desc in cursor.description]
-        # Not the most efficient way of doing things, but the db will always
-        # be small enough that it won't matter
-        results = cursor.fetchall()
         objects = []
         for result in results:
             attrs = {}
@@ -305,7 +310,7 @@ class Model(object):
         self.kind = kind
         self.persistance = persistance
         if not testing:
-            if not self.persistance.list(self.kind, self.__class__, self.__dict__):
+            if not self.persistance.exists(self.kind, self.__class__, self.__dict__):
               self.persistance.create(self.__dict__.copy())
     
     def list(self):
