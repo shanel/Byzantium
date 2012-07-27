@@ -21,7 +21,7 @@ def Error(Exception):
 
 def _sanitize(tainted):
     if 'persistance' in tainted:
-        tainted.pop('persistance')
+        _ = tainted.pop('persistance')
     return tainted
 
 
