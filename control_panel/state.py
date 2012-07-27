@@ -300,7 +300,7 @@ class Model(object):
             self.persistance.create(self.__dict__.copy())
     
     def list(self):
-        return self.persistance.list(self.kind, self.__class__)
+        return self.persistance.list(self.kind, self.__class__())
     
     def replace(self, **kwagrs):
         old = self.__dict__.copy()
