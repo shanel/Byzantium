@@ -242,7 +242,7 @@ class DBBackedState(State):
             attrs = {}
             for i, v in enumerate(result):
                 attrs[col_name_list[i]] = v
-            obj = klass(**attrs)
+            obj = klass(attrs)
             objects.append(obj)
         return objects
 
