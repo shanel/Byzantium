@@ -274,16 +274,22 @@ class NetworkState(DBBackedState):
         self.initialize(wireless)
 
 
-class NetworkState(DBBackedState):
+class MeshState(DBBackedState):
+    
+    def __init__(self, db_path):
+        super(MeshState, self).__init__(db_path)
+        meshes = {'interface': '', 'protocol': '', 'enabled': '', 'kind': 'meshes'}
+        self.initialize(meshes)
+
+
+class ServiceState(DBBackedState):
 
     def __init__(self, db_path):
-        super(NetworkState, self).__init__(db_path)
-        meshes = {'interface': '', 'protocol': '', 'enabled': '', 'kind': 'meshes'}
+        super(ServiceState, self).__init__(db_path)
         daemons = {'name': '', 'showtouser': '', 'port': 0, 'initscript': '', 'status': '', 'kind': 'daemons'}
         webapps = {'name': '', 'status': '', 'kind': 'webapps'}
-        self.initialize(meshes)
         self.initialize(daemons)
-        self.initialize(webapps)
+        self.initialize(webapps)    
 
 
 class Model(object):
