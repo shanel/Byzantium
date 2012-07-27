@@ -321,7 +321,7 @@ class Model(object):
         for k, v in kwargs.iteritems():
             if k not in ('kind', 'persistance'):
                 setattr(self, k, v)
-        self.persistance.replace(self.__class__(old), self)
+        self.persistance.replace(old, self.__dict__)
                 
                 
 class WiredNetwork(Model):
