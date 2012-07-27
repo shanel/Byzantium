@@ -252,10 +252,6 @@ class Model(object):
                 
 
 class WiredNetwork(Model):
-    # make this Model-ly
-    # self.persistance = a passed in State object, then just pass 'self'
-    # in as the item :)
-    # Will need to copy state for replace
     
     def __init__(self, interface, gateway, enabled, persistance):
         self.interface = interface
