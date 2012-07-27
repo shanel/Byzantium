@@ -242,7 +242,7 @@ class DBBackedState(State):
             attrs = {}
             for i, v in enumerate(result):
                 attrs[col_name_list[i]] = v
-            obj = klass(attrs)
+            obj = klass(**attrs)
             objects.append(obj)
         return objects
 
@@ -294,7 +294,7 @@ class ServiceState(DBBackedState):
 
 class Model(object):
     
-    def __init__(self, kind, persistance, testing=False):
+    def __init__(self, kind=None, persistance=None, testing=False):
         self.kind = kind
         self.persistance = persistance
         if not testing:
@@ -313,7 +313,7 @@ class Model(object):
                 
 class WiredNetwork(Model):
     
-    def __init__(self, interface, gateway, enabled, persistance, testing=False):
+    def __init__(self, interface=None, gateway=None, enabled=None, persistance=None, testing=False):
         self.interface = interface
         self.gateway = gateway
         self.enabled = enabled
@@ -324,7 +324,7 @@ class WiredNetwork(Model):
 
 class WirelessNetwork(Model):
 
-    def __init__(self, client_interface, mesh_interface, gateway, enabled, channel, essid, persistance, testing=False):
+    def __init__(self, client_interface=None, mesh_interface=None, gateway=None, enabled=None, channel=None, essid=None, persistance=None, testing=False):
         self.client_interface = client_interface
         self.mesh_interface = mesh_interface
         self.gateway = gateway
@@ -338,7 +338,7 @@ class WirelessNetwork(Model):
 
 class Mesh(Model):
 
-    def __init__(self, interface, protocol, enabled, persistance, testing=False):
+    def __init__(self, interface=None, protocol=None, enabled=None, persistance=None, testing=False):
         self.interface = interface
         self.protocol = protocol
         self.enabled = enabled
@@ -349,7 +349,7 @@ class Mesh(Model):
 
 class Daemon(Model):
 
-    def __init__(self, name, showtouser, port, initscript, status, persistance, testing=False):
+    def __init__(self, name=None, showtouser=None, port=None, initscript=None, status=None, persistance=None, testing=False):
         self.name = name
         self.status = status
         self.showtouser = showtouser
@@ -362,7 +362,7 @@ class Daemon(Model):
 
 class WebApp(Model):
 
-    def __init__(self, name, status, persistance, testing=False):
+    def __init__(self, name=None, status=None, persistance=None, testing=False):
         self.name = name
         self.status = status
         super(WebApp, self).__init__('webapps', persistance, testing)
