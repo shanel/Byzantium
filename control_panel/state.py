@@ -297,7 +297,7 @@ class Model(object):
     def __init__(self, persistance, testing=False):
         print "Dict as we come into Model: %s" % self.__dict__
         self.persistance = persistance
-        print "Dict after resetting self.persistance: %s" self.__dict__
+        print "Dict after resetting self.persistance: %s" % self.__dict__
         if not testing:
             self.persistance.create(self.__dict__)
             print "Dict after create call: %s" % self.__dict__
