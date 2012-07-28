@@ -219,6 +219,15 @@ class DBBackedState(State):
         self._execute_and_commit(to_execute, values)
 
     def exists(self, kind, attrs):
+        """Find all matching entries that match a dict of attrs.
+        
+        Args:
+          kind: str, the kind of thing being searched for
+          attrs: dict, a dict of attributes
+          
+         Returns:
+           A list of matching entries
+        """
         cursor = self.connection.cursor()
         template, vals = self._create_update_query_fragment_from_item(attrs)
         to_execute = 'SELECT * FROM %s WHERE %s' % (kind, template)
