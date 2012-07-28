@@ -29,14 +29,14 @@ def get_matching(pattern, objects):
     """Take a dict and find all objects in list with matching values.
     
     Args:
-      pattern: dict, a dict to match off
-      objects: list, list of objects to check against
+        pattern: dict, a dict to match off
+        objects: list, list of objects to check against
 
     Returns:
-      A list of matching objects
+        A list of matching objects
 
     Raises:
-      Error: if the keys of the pattern are not valid object attrs
+        Error: if the keys of the pattern are not valid object attrs
     """
     contenders = []
     keys = set(pattern.keys())
@@ -58,9 +58,9 @@ class State(object):
         """Set up any initial state necessary.
         
         Args:
-          name: str, the name of the state you are storing
-          prototype: instance, a simple instance of the class who's attributes
-              make up the state
+            name: str, the name of the state you are storing
+            prototype: instance, a simple instance of the class who's attributes
+                make up the state
         """
         return
 
@@ -69,8 +69,8 @@ class State(object):
         """Create a new state entry.
         
         Args:
-          kind: str, the kind of state you are creating
-          item: instance, the instance who's attributes you are adding
+            kind: str, the kind of state you are creating
+            item: instance, the instance who's attributes you are adding
         """
         return
 
@@ -79,10 +79,10 @@ class State(object):
         """Get a list of state objects.
         
         Args:
-          kind: str, the kind of state you are trying to get a listing of
+            kind: str, the kind of state you are trying to get a listing of
         
         Returns:
-          A list of appropriate objects
+            A list of appropriate objects
         """
         pass
 
@@ -91,9 +91,9 @@ class State(object):
         """Replace an old state entry with a new one.
         
         Args:
-          kind: str, the kind of state you are trying to update
-          old: instance, the instance who's attributes you will be replacing
-          new: instance, the instance who's attributes will replace the old attributes
+            kind: str, the kind of state you are trying to update
+            old: instance, the instance who's attributes you will be replacing
+            new: instance, the instance who's attributes will replace the old attributes
         """
         pass
 
@@ -101,11 +101,11 @@ class DBBackedState(State):
     """A State object who's backend store is an SQLite3 DB.
     
     Attributes:
-      db_path: str, the path to the SQLite3 DB file
-      connection: sqlite3.connection, a connection object for working with the
-          db
-      kind_to_class: dict, a mapping of string 'kinds' to the proper classes to
-          return them with
+        db_path: str, the path to the SQLite3 DB file
+        connection: sqlite3.connection, a connection object for working with the
+            db
+        kind_to_class: dict, a mapping of string 'kinds' to the proper classes to
+            return them with
     """
 
     def __init__(self, db_path):
@@ -125,12 +125,12 @@ class DBBackedState(State):
         """Take an instance of a class and make a table based on its attributes.
         
         Args:
-          prototype: dict, dict of attributes we will
-              name columns with
+            prototype: dict, dict of attributes we will
+                name columns with
         
         Returns:
-          A string with '%s NUMERIC/TEXT' entries to be used and the tuple of
-              column names
+            A string with '%s NUMERIC/TEXT' entries to be used and the tuple of
+                column names
         """
         query = []
         columns = _sanitize(prototype).keys()
@@ -146,10 +146,10 @@ class DBBackedState(State):
         """Take an item and build a query fragment from its attributes.
         
         Args:
-          item: instance, an instance of a class who's attributes we will query
+            item: instance, an instance of a class who's attributes we will query
         
         Returns:
-          A string of '?,' entries and a tuple of values to be used in the query
+            A string of '?,' entries and a tuple of values to be used in the query
         """
         query = []
         values = []
@@ -164,11 +164,11 @@ class DBBackedState(State):
         """Take an item and build a query template for an update.
         
         Args:
-          item: instance, an instance of a class who's attributes we will query
+            item: instance, an instance of a class who's attributes we will query
         
         Returns:
-          A string of 'attribute=?' entries and a tuple of values to be used in
-              the query
+            A string of 'attribute=?' entries and a tuple of values to be used in
+                the query
         """
         update = []
         values = []
@@ -182,11 +182,11 @@ class DBBackedState(State):
         """Take an item and build a setting template for an update.
         
         Args:
-          item: dict, a dict who's attributes we will use
+            item: dict, a dict who's attributes we will use
         
         Returns:
-          A string of 'attribute=?' entries and a tuple of values to be used in
-              the setting command
+            A string of 'attribute=?' entries and a tuple of values to be used in
+                the setting command
         """
         update = []
         values = []
@@ -200,7 +200,7 @@ class DBBackedState(State):
         """Create a table based on a prototype dict.
         
         Args:
-          prototype: dict, a dict to base column names off
+            prototype: dict, a dict to base column names off
         """
         kind = prototype.pop('kind')
         frag, columns = self._create_initialization_fragment_from_prototype(prototype)
@@ -211,7 +211,7 @@ class DBBackedState(State):
         """Insert or replace an entry in the backend.
         
         Args:
-          item: dict, a dict who's attributes we'll insert/replace
+            item: dict, a dict who's attributes we'll insert/replace
         """
         kind = item.pop('kind')
         frag, values = self._create_query_fragment_from_item(item)
@@ -222,11 +222,11 @@ class DBBackedState(State):
         """Find all matching entries that match a dict of attrs.
         
         Args:
-          kind: str, the kind of thing being searched for
-          attrs: dict, a dict of attributes
+            kind: str, the kind of thing being searched for
+            attrs: dict, a dict of attributes
           
          Returns:
-           A list of matching entries
+             A list of matching entries
         """
         cursor = self.connection.cursor()
         template, vals = self._create_update_query_fragment_from_item(attrs)
@@ -238,12 +238,12 @@ class DBBackedState(State):
         """List all entries for a given kind, returning them as klass objects.
         
         Args:
-          kind: str, the kind of entry we are looking for
-          klass: class, the class type we should build out of each result
-          attrs: dict, dict of attrs specifically being checked for
+            kind: str, the kind of entry we are looking for
+            klass: class, the class type we should build out of each result
+            attrs: dict, dict of attrs specifically being checked for
           
          Returns:
-           a list of klass objects based on results from the backend call
+             a list of klass objects based on results from the backend call
         """
         cursor = self.connection.cursor()
         if attrs:
@@ -271,8 +271,8 @@ class DBBackedState(State):
         """Replace an old entry with a new one.
         
         Args:
-          old: dict, a dict of the old data (what we search for)
-          new: dict, a dict of the replacement data
+            old: dict, a dict of the old data (what we search for)
+            new: dict, a dict of the replacement data
         """
         kind = old.pop('kind')
         query_frag, query_values = self._create_update_query_fragment_from_item(old)
